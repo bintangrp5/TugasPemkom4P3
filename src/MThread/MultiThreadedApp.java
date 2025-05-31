@@ -7,82 +7,38 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.TimeZone;
 import javazoom.jl.player.Player;
-
+import object.FontSetting;
 
 /**
  *
  * @author binta
  */
 public class MultiThreadedApp extends javax.swing.JFrame {
-     private JLabel timeLabel;
-    private JComboBox<String> timezoneSelector;
-    private JButton playButton, stopButton, setAlarmButton, chooseFileButton;
-    private JTextField alarmField;
-    private volatile boolean alarmSet = false;
-    private String alarmTime = "";
+
+    private boolean isUpdatingLanguage = false;
     private volatile Player mp3Player;
     private Thread musicThread;
-    private String selectedMp3File = null; 
-    
+    private String selectedMp3File = null;
+    private boolean isPlaying = false;
+    private boolean isPaused = false;
+    private String currentFileName = "";
+
     public MultiThreadedApp() {
-        setTitle("MP3 Music, World Clock & Alarm");
-        setSize(400, 300);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false); 
-        setLayout(new FlowLayout());
-        setLocationRelativeTo(null); 
+        initComponents();
+        applyFont();
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{
+            "UTC", "Asia/Jakarta", "America/New_York", "Europe/London"
+        }));
 
-        // Label Jam
-        timeLabel = new JLabel("Time: ");
-        add(timeLabel);
-
-        // Pilihan Zona Waktu
-        String[] timezones = {"UTC", "Asia/Jakarta", "America/New_York", "Europe/London"};
-        timezoneSelector = new JComboBox<>(timezones);
-        add(timezoneSelector);
-
-        // Tombol Pemutar Musik
-        chooseFileButton = new JButton("Choose MP3 File");
-        playButton = new JButton("Play MP3");
-        stopButton = new JButton("Stop MP3");
-        add(chooseFileButton);
-        add(playButton);
-        add(stopButton);
-
-        // Alarm
-        alarmField = new JTextField(5);
-        setAlarmButton = new JButton("Set Alarm (HH:mm)");
-        add(alarmField);
-        add(setAlarmButton);
-
-        // Listener untuk Memilih File MP3
-        chooseFileButton.addActionListener(e -> selectMp3File());
-
-        // Listener untuk Play & Stop Musik
-        playButton.addActionListener(e -> {
-            if (selectedMp3File != null) {
-                playMusic(selectedMp3File);
-            } else {
-                JOptionPane.showMessageDialog(this, "Pilih file MP3 terlebih dahulu!", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        stopButton.addActionListener(e -> stopMusic());
-
-        // Listener untuk Set Alarm
-        setAlarmButton.addActionListener(e -> {
-            alarmTime = alarmField.getText();
-            alarmSet = true;
-            JOptionPane.showMessageDialog(this, "Alarm set for: " + alarmTime);
-        });
-
-        // Thread untuk update jam dunia
         new Thread(this::updateTime).start();
-
-        // Thread untuk alarm
-        new Thread(this::checkAlarm).start();
+        labelLagu.setText(currentFileName);
+        setSize(600, 400);
+        setLocationRelativeTo(null);
+        setResizable(false);
     }
 
     /**
@@ -94,21 +50,148 @@ public class MultiThreadedApp extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        timeLabel1 = new javax.swing.JLabel();
+        chooseFileButton = new javax.swing.JButton();
+        stopButton = new javax.swing.JButton();
+        cmbChooseLanguage = new javax.swing.JLabel();
+        jComboBox2 = new javax.swing.JComboBox<>();
+        jComboBox1 = new javax.swing.JComboBox<>();
+        labelLagu = new javax.swing.JLabel();
+        playButton = new javax.swing.JToggleButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        timeLabel1.setText("Time :");
+
+        chooseFileButton.setText("Choose MP3 File");
+        chooseFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chooseFileButtonActionPerformed(evt);
+            }
+        });
+
+        stopButton.setText("Stop");
+        stopButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopButtonActionPerformed(evt);
+            }
+        });
+
+        cmbChooseLanguage.setText("Choose Language:");
+
+        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "English", "Indonesia", "Korean", "Japanese", " ", " " }));
+        jComboBox2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox2ActionPerformed(evt);
+            }
+        });
+
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox1ActionPerformed(evt);
+            }
+        });
+
+        labelLagu.setText("Lagu yang Diputar");
+
+        playButton.setText("Play");
+        playButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(labelLagu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(115, 115, 115)
+                                .addComponent(chooseFileButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(stopButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(timeLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cmbChooseLanguage)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 161, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(30, 30, 30)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(timeLabel1)
+                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbChooseLanguage)
+                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(230, 230, 230)
+                .addComponent(labelLagu)
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chooseFileButton)
+                    .addComponent(stopButton)
+                    .addComponent(playButton))
+                .addGap(30, 30, 30))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void chooseFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chooseFileButtonActionPerformed
+        // TODO add your handling code here:
+        selectMp3File();
+    }//GEN-LAST:event_chooseFileButtonActionPerformed
+
+    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        // TODO add your handling code here:
+        stopMusic();
+        playButton.setText("Play");
+        isPlaying = false;;
+    }//GEN-LAST:event_stopButtonActionPerformed
+
+    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
+        // TODO add your handling code here:
+        if (!isUpdatingLanguage) {
+            applyLanguage();
+        }
+    }//GEN-LAST:event_jComboBox2ActionPerformed
+
+    private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
+        // TODO add your handling code here:
+        if (selectedMp3File == null) {
+            JOptionPane.showMessageDialog(this, "Pilih file MP3 terlebih dahulu.");
+            return;
+        }
+
+        if (!isPlaying) {
+            playMusic(selectedMp3File);
+            playButton.setText("Pause");
+            isPlaying = true;
+        } else {
+            stopMusic(); // simulate pause
+            playButton.setText("Play");
+            isPlaying = false;
+        }
+    }//GEN-LAST:event_playButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -146,18 +229,32 @@ public class MultiThreadedApp extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton chooseFileButton;
+    private javax.swing.JLabel cmbChooseLanguage;
+    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<String> jComboBox2;
+    private javax.swing.JLabel labelLagu;
+    private javax.swing.JToggleButton playButton;
+    private javax.swing.JButton stopButton;
+    private javax.swing.JLabel timeLabel1;
     // End of variables declaration//GEN-END:variables
+
     private void selectMp3File() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Pilih file MP3");
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("MP3 Files", "mp3"));
-        
+
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             if (file.getName().toLowerCase().endsWith(".mp3")) {
                 selectedMp3File = file.getAbsolutePath();
-                JOptionPane.showMessageDialog(this, "File MP3 dipilih: " + selectedMp3File);
+                currentFileName = file.getName();
+                labelLagu.setText("Dipilih: " + currentFileName);
+                labelLagu.setText(currentFileName);
+                playButton.setText("Play");
+                isPlaying = false;
+                isPaused = false;
             } else {
                 JOptionPane.showMessageDialog(this, "Harap pilih file MP3!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -166,31 +263,12 @@ public class MultiThreadedApp extends javax.swing.JFrame {
 
     private void updateTime() {
         while (true) {
-            String selectedZone = (String) timezoneSelector.getSelectedItem();
+            String selectedZone = (String) jComboBox1.getSelectedItem();
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
             sdf.setTimeZone(TimeZone.getTimeZone(selectedZone));
-            timeLabel.setText("Time: " + sdf.format(new Date()));
+            timeLabel1.setText("Time: " + sdf.format(new Date()));
             try {
-                Thread.sleep(1000); 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void checkAlarm() {
-        while (true) {
-            if (alarmSet) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-                String currentTime = sdf.format(new Date());
-
-                if (currentTime.equals(alarmTime)) {
-                    JOptionPane.showMessageDialog(this, "ALARM! Time to Wake Up!");
-                    alarmSet = false; 
-                }
-            }
-            try {
-                Thread.sleep(5000); 
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -198,12 +276,18 @@ public class MultiThreadedApp extends javax.swing.JFrame {
     }
 
     private void playMusic(String filePath) {
-        stopMusic(); 
+        stopMusic();
         musicThread = new Thread(() -> {
-            try {
-                FileInputStream fileInputStream = new FileInputStream(filePath);
+            try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
                 mp3Player = new Player(fileInputStream);
                 mp3Player.play();
+
+                // Setelah selesai diputar
+                SwingUtilities.invokeLater(() -> {
+                    playButton.setText("Play");
+                    isPlaying = false;
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -213,7 +297,88 @@ public class MultiThreadedApp extends javax.swing.JFrame {
 
     private void stopMusic() {
         if (mp3Player != null) {
-            mp3Player.close();
+            try {
+                mp3Player.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (musicThread != null && musicThread.isAlive()) {
+            musicThread.interrupt();
         }
     }
+
+    private void applyFont() {
+        try {
+            FontSetting fs = new FontSetting("Code2000", 1, 14);
+            fs.selectContainer(getContentPane());
+        } catch (Exception e) {
+            System.err.println("" + e.getMessage());
+        }
+    }
+
+    private void applyLanguage() {
+        String language;
+        String country;
+        Locale locale;
+        int lang = jComboBox2.getSelectedIndex();
+
+        try {
+            switch (lang) {
+                case 0:
+                    language = "en";
+                    country = "US";
+                    break;
+                case 1:
+                    language = "in";
+                    country = "ID";
+                    break;
+                case 2:
+                    language = "ko";
+                    country = "KR";
+                    break;
+                case 3:
+                    language = "ja";
+                    country = "JP";
+                    break;
+                default:
+                    language = "en";
+                    country = "US";
+                    break;
+            }
+
+            locale = new Locale(language, country);
+            ResourceBundle rb = ResourceBundle.getBundle("localization/Bundle", locale);
+
+            // Teks untuk komponen
+            timeLabel1.setText(rb.getString("MultiThreadedApp.timeLabel1.text"));
+            chooseFileButton.setText(rb.getString("MultiThreadedApp.chooseFileButton.text"));
+            playButton.setText(rb.getString("MultiThreadedApp.playButton.text"));
+            stopButton.setText(rb.getString("MultiThreadedApp.stopButton.text"));
+
+            // Blokir listener sementara
+            isUpdatingLanguage = true;
+
+            // Reset isi ComboBox
+            jComboBox2.removeAllItems();
+            for (int i = 0; i < 4; i++) {
+                jComboBox2.addItem(rb.getString("cmbChooseLanguage." + i));
+            }
+
+            // Pilih kembali index yang sesuai
+            if (lang >= 0 && lang < jComboBox2.getItemCount()) {
+                jComboBox2.setSelectedIndex(lang);
+            }
+
+            // Kembalikan listener
+            isUpdatingLanguage = false;
+
+            // Set title
+            setTitle(rb.getString("MultiThreadedApp.title"));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
